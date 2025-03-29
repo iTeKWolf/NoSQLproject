@@ -1,0 +1,6 @@
+MONGO_URI="mongodb+srv://root:azerty@cluster0.rmvxk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+NEO4J_URI = "neo4j+s://c5b0270f.databases.neo4j.io"
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "x8e0G0kCB0kJfNuSoDY_8yIK0JOBWYoTRJcpFo2jgGI"
+M_DB="entertainment"
+M_COLLECTION="films"
