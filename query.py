@@ -8,7 +8,7 @@ from collections import Counter
 import scipy.stats as stats
 
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
 
 import database
 db=database.get_db()
@@ -24,16 +24,13 @@ def query1():
         {"$limit": 1}
     ]))
 
-    if result:
-        print(f"1)L'année avec le plus grand nombre de films est {result[0]['_id']} avec {result[0]['count']} films.")
-    else:
-        print("Aucun résultat trouvé.")
+    return result
 
 #Query 2
 ####################################################
 def query2():
     count = collection.count_documents({"year":{"$gt":1999}})
-    print(f"2)Le nombre de films sortis apres 1999 est : {count}")
+    return count
 
 #Query 3
 ####################################################
@@ -45,11 +42,7 @@ def query3():
 
 
     result = list(collection.aggregate(pipeline))
-
-    if result and "average_votes" in result[0]:
-        print(f"3)La moyenne des votes des films sortis en 2007 est {result[0]['average_votes']:.2f}.")
-    else:
-        print("Aucun film trouvé pour l'année 2007.")
+    return result
 
 
 #Query 4
@@ -64,14 +57,15 @@ def query4():
         'Year': years_sorted,
         'Count': counts_sorted
     })
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x='Year', y='Count', data=df, color='skyblue')
-    plt.xlabel('Année')
-    plt.ylabel('Nombre de films')
-    plt.title('4)Nombre de films par année')
+    # Création du graphique
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(x='Year', y='Count', data=df, color='skyblue', ax=ax)
+    ax.set_xlabel('Année')
+    ax.set_ylabel('Nombre de films')
+    ax.set_title('Nombre de films par année')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.show()
+    return fig
 
 #Query 5
 ####################################################
@@ -82,15 +76,8 @@ def query5():
         {"$group": {"_id": None, "genres": {"$addToSet": "$genres"}}} 
     ]
 
-
     result = list(collection.aggregate(pipeline))
-
-
-    if result and "genres" in result[0]:
-        print("5)Genres disponibles dans la base de données :")
-        print(", ".join(sorted(result[0]["genres"]))) 
-    else:
-        print("Aucun genre trouvé.")
+    return result
 
 #Query 6
 ####################################################
@@ -101,14 +88,13 @@ def query6():
         {"$sort": {"Revenue (Millions)": -1}},
         {"$limit": 1}
     ])
-    for film in result:
-        print(f"6)Le film ayant genere le plus de revenu est : {film['title']}")
-        print(f"Revenu genere : {film['Revenue (Millions)']} millions")
+    return result
 
 #Query 7
 ####################################################
 def query7():
     pipeline = [
+        {"$match": {"Director": {"$exists": True, "$ne": None, "$ne": ""}}},
         {"$group": {"_id": "$Director", "nombre_films": {"$sum": 1}}},
         {"$match": {"nombre_films": {"$gt": 5}}}, 
         {"$sort": {"nombre_films": -1}}  
@@ -116,13 +102,7 @@ def query7():
 
 
     result = list(collection.aggregate(pipeline))
-
-    if result:
-        print("7)Réalisateurs ayant réalisé plus de 5 films :")
-        for entry in result:
-            print(f"- {entry['_id']} : {entry['nombre_films']} films")
-    else:
-        print("Aucun réalisateur n'a réalisé plus de 5 films.")
+    return result
 
 #Query 8
 ####################################################
@@ -134,8 +114,8 @@ def query8():
         {"$sort": {"average_revenue": -1}},
         {"$limit": 1}
     ])
-    for genre in result:
-        print(f"8)Le genre qui rapporte le plus en moyenne est {genre['_id']} avec {genre['average_revenue']:.2f} millions de dollars.")
+    return result
+    
 
 #Query 9
 ####################################################
@@ -156,25 +136,16 @@ def query9():
 
     result = list(collection.aggregate(pipeline))
     # Fonction pour essayer de convertir le rating en nombre
-    def get_numeric_rating(rating):
-        try:
-            # Si le rating est numérique, on le convertit en float
-            if rating.lower() in ["unrated", "na", "not rated"]:
-                return "N/A"
-            return float(rating)  # Convertir en float
-        except ValueError:
-            return rating  # Si c'est une chaîne qui ne peut pas être convertie, on garde la chaîne
+    # Convertir les résultats pour Streamlit
+    formatted_result = []
+    for entry in result:
+        decade = entry["_id"]
+        for movie in entry["top_movies"]:
+            title = movie.get("title", "Inconnu")
+            rating = movie.get("rating", "N/A")
+            formatted_result.append({"Décennie": decade, "Titre": title, "Note": rating})
 
-    if result:
-        print("9)Top 3 films par décennie :")
-        for entry in result:
-            print(f"\nDécennie {entry['_id']} :")
-            for movie in entry["top_movies"]:
-                title = movie.get("title", "Inconnu")  # Valeur par défaut si 'title' est manquant
-                rating = get_numeric_rating(movie.get("rating", "N/A"))  # Traiter la note correctement
-                print(f"- {title} (Note: {rating})")
-    else:
-        print("Aucun film trouvé.")
+    return formatted_result  # Retourner une liste de dictionnaires
 
 #Query 10
 ####################################################
@@ -190,9 +161,7 @@ def query10():
         }},
         {"$sort": {"runtime": -1}}  # Trier par durée décroissante (optionnel)
     ])
-
-    for film in result:
-        print(f"10)Pour le genre {film['_id']}, le film le plus long est '{film['longest_movie']}' avec {film['runtime']} minutes.")
+    return result
 
 #Query 11
 ####################################################
@@ -213,13 +182,7 @@ def query11():
     top_movies_view = db["top_movies_view"]
 
     result = list(top_movies_view.find())
-
-    if result:
-        print("11)Films avec Metascore > 80 et Revenus > 50M :")
-        for movie in result:
-            print(f"- {movie['title']} (Metascore: {movie['Metascore']}, Revenue: {movie['Revenue (Millions)']}M)")
-    else:
-        print("Aucun film ne correspond aux critères.")
+    return result
 
 #Query 12
 ####################################################
@@ -236,22 +199,20 @@ def query12():
     df["Revenue (Millions)"] = pd.to_numeric(df["Revenue (Millions)"], errors="coerce")
     # Supprimer les valeurs NaN après conversion
     df.dropna(inplace=True)
-    # Afficher les premières lignes pour vérifier
-    print(df.head())
     # Calcul de la corrélation de Pearson
     pearson_corr, pearson_p = stats.pearsonr(df["Runtime (Minutes)"], df["Revenue (Millions)"])
-    print(f"12)Correlation de Pearson: {pearson_corr:.4f} (p-value: {pearson_p:.4f})")
     # Calcul de la corrélation de Spearman
     spearman_corr, spearman_p = stats.spearmanr(df["Runtime (Minutes)"], df["Revenue (Millions)"])
-    print(f"12)Correlation de Spearman: {spearman_corr:.4f} (p-value: {spearman_p:.4f})")
+    
+    # Création du graphique
+    fig, ax = plt.subplots(figsize=(10,6))
+    sns.regplot(x=df["Runtime (Minutes)"], y=df["Revenue (Millions)"], 
+                scatter_kws={"alpha":0.5}, line_kws={"color":"red"}, ax=ax)
+    ax.set_title("Correlation entre la durée des films et leur revenu")
+    ax.set_xlabel("Durée du film (minutes)")
+    ax.set_ylabel("Revenu (Millions)")
 
-    # Création d'un scatter plot avec régression
-    plt.figure(figsize=(10,6))
-    sns.regplot(x=df["Runtime (Minutes)"], y=df["Revenue (Millions)"], scatter_kws={"alpha":0.5}, line_kws={"color":"red"})
-    plt.title("Correlation entre la durée des films et leur revenu")
-    plt.xlabel("Durée du film (minutes)")
-    plt.ylabel("Revenu (Millions)")
-    plt.show()
+    return df, pearson_corr, pearson_p, spearman_corr, spearman_p, fig
 
 #Query 13
 ####################################################
@@ -266,15 +227,4 @@ def query13():
     ]
 
     result = list(collection.aggregate(pipeline))
-
-    if result:
-        print("13)Évolution de la durée moyenne des films par décennie :")
-        for entry in result:
-            # Vérification si 'average_runtime' est None
-            average_runtime = entry.get('average_runtime')
-            if average_runtime is None:
-                print(f"Décennie {entry['_id']} : Non disponible")
-            else:
-                print(f"Décennie {entry['_id']} : {average_runtime:.2f} minutes")
-    else:
-        print("Aucun film trouvé.")
+    return result
