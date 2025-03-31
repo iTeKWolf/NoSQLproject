@@ -293,6 +293,17 @@ def query18():
     result = session.run(query)
     return result.single()
     
+
+
+
+
+
+
+
+
+
+
+    
 #Query 19
 ####################################################
 #Query 20
