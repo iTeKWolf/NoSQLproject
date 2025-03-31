@@ -254,12 +254,45 @@ def query15():
     """
     result = session.run(query)
     return [record["acteur"] for record in result]
+
 #Query 16
 ####################################################
+def query16():
+    query = """
+    MATCH (a:Actor)-[:A_JOUE]->(f:Film)
+    WHERE f.revenue IS NOT NULL AND f.revenue <> "N/A"
+    RETURN a.name AS acteur, SUM(coalesce(toFloat(f.revenue), 0)) AS total_revenu
+    ORDER BY total_revenu DESC
+    LIMIT 1;
+    """
+    result = session.run(query)
+    record = result.single()
+    return record["acteur"], record["total_revenu"] if record else (None, 0)
+
 #Query 17
 ####################################################
+def query17():
+    query = """
+    MATCH (f:Film)
+    WHERE f.votes IS NOT NULL AND f.votes <> "N/A"
+    RETURN avg(toFloat(f.votes)) AS moyenne_votes;
+    """
+    result = session.run(query)
+    return result.single()["moyenne_votes"]
+    
 #Query 18
 ####################################################
+def query18():
+    query = """
+    MATCH (f:Film)
+    UNWIND f.genre AS genre
+    RETURN genre, COUNT(*) AS nombre_films
+    ORDER BY nombre_films DESC
+    LIMIT 1;
+    """
+    result = session.run(query)
+    return result.single()
+    
 #Query 19
 ####################################################
 #Query 20

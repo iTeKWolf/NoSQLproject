@@ -3,7 +3,7 @@ from database import get_collection
 collection = get_collection()
 
 def extract_films():
-    films = collection.find({}, {"_id": 1, "title": 1, "year": 1, "Votes": 1, "Revenue (Millions)": 1, "rating": 1, "Director": 1, "Actors": 1})
+    films = collection.find({}, {"_id": 1, "title": 1, "year": 1, "Votes": 1, "Revenue (Millions)": 1, "rating": 1, "Director": 1, "Actors": 1, "genre": 1})
     return list(films)
 
 def extract_directors():

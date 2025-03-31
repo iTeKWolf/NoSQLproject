@@ -10,7 +10,8 @@ def load_films(films):
         m.votes = film.votes,
         m.revenue = film.revenue, 
         m.rating = film.rating,
-        m.director = film.director
+        m.director = film.director,
+         m.genre = COALESCE(film.genre, [])
     ON MATCH SET 
         m.year = COALESCE(film.year, m.year),
         m.votes = COALESCE(film.votes, m.votes),

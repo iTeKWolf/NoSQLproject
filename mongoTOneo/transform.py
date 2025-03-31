@@ -9,7 +9,8 @@ def clean_films_data(films):
             "revenue": film.get("Revenue (Millions)", 0),
             "rating": film.get("rating", "N/A"),
             "director": film.get("Director", None),
-            "actors": [actor.strip() for actor in film.get("Actors", "").split(",")] if film.get("Actors") else []
+            "actors": [actor.strip() for actor in film.get("Actors", "").split(",")] if film.get("Actors") else [],
+            "genre":[g.strip() for g in film.get("genre", "").split(",")] if film.get("genre") else [],
         }
         #print(cleaned_film)#debug
         cleaned_films.append(cleaned_film)

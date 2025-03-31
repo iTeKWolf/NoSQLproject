@@ -129,7 +129,7 @@ if st.button("14)Quel est l'acteur ayant joue dans le plus grand nombre de films
     else:
         st.warning("Aucun acteur trouvé.")
 
-if st.button("15)Quels sont les acteurs ayant joue dans des films où l'actrice Anne Hathaway a également joue ?"):
+if st.button("15)Quels sont les acteurs ayant joué dans des films où l'actrice Anne Hathaway a également joué ?"):
     actors = query.query15()
     if actors:
         st.success(f"Acteurs ayant joué avec Anne Hathaway :")
@@ -137,3 +137,24 @@ if st.button("15)Quels sont les acteurs ayant joue dans des films où l'actrice 
             st.write(f"- {actor}")
     else:
         st.warning("Aucun acteur trouvé.")
+
+if st.button("16)Quel est l'acteur ayant joué dans des films totalisant le plus de revenus ?"):
+    actor, revenue = query.query16()
+    if actor:
+        st.success(f"L'acteur ayant joué dans les films générant le plus de revenus est **{actor}** avec **{revenue:.2f} millions** de dollars.")
+    else:
+        st.warning("Aucun acteur trouvé.")
+
+if st.button("17)Quelle est la moyenne des votes ?"):
+    moyenne = query.query17()
+    if moyenne is not None:
+        st.success(f"La moyenne des votes des films est de : {moyenne:.2f}")
+    else:
+        st.error("Impossible de calculer la moyenne des votes.")
+
+if st.button("18)Quel est le genre le plus représenté dans la base de données ?"):
+    genre, count = query.query18()
+    if genre:
+        st.success(f"Le genre le plus représenté est : {genre} ({count} films)")
+    else:
+        st.error("Impossible de déterminer le genre le plus représenté.")
