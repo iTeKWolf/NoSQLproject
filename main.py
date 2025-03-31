@@ -119,3 +119,21 @@ if st.button("13)Y a-t-il une évolution de la durée moyenne des films par déc
                 st.write(f"Décennie {entry['_id']} : {average_runtime:.2f} minutes")
     else:
         st.error("Aucun film trouvé.")
+
+st.title("Partie Neo4j")
+
+if st.button("14)Quel est l'acteur ayant joue dans le plus grand nombre de films ?"):
+    acteur, nb_films = query.query14()
+    if acteur:
+        st.success(f"L'acteur ayant joué dans le plus de films est **{acteur}** avec **{nb_films}** films !")
+    else:
+        st.warning("Aucun acteur trouvé.")
+
+if st.button("15)Quels sont les acteurs ayant joue dans des films où l'actrice Anne Hathaway a également joue ?"):
+    actors = query.query15()
+    if actors:
+        st.success(f"Acteurs ayant joué avec Anne Hathaway :")
+        for actor in actors:
+            st.write(f"- {actor}")
+    else:
+        st.warning("Aucun acteur trouvé.")

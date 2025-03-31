@@ -13,6 +13,7 @@ matplotlib.use("Agg")
 import database
 db=database.get_db()
 collection=database.get_collection()
+session=database.get_session()
 
 
 #Query 1
@@ -228,3 +229,50 @@ def query13():
 
     result = list(collection.aggregate(pipeline))
     return result
+
+#Query 14
+####################################################
+def query14():
+    query = """
+    MATCH (a:Actor)-[:A_JOUE]->(f:Film)
+    RETURN a.name AS acteur, COUNT(f) AS nb_films
+    ORDER BY nb_films DESC
+    LIMIT 1
+    """
+    result = session.run(query)
+    record = result.single()
+    return record["acteur"], record["nb_films"] if record else (None, 0)
+
+#Query 15
+####################################################
+def query15():
+    query = """
+    MATCH (a:Actor)-[:A_JOUE]->(f:Film)<-[:A_JOUE]-(anne:Actor {name: "Anne Hathaway"})
+    WHERE a.name <> "Anne Hathaway"
+    RETURN DISTINCT a.name AS acteur
+    ORDER BY acteur;
+    """
+    result = session.run(query)
+    return [record["acteur"] for record in result]
+#Query 16
+####################################################
+#Query 17
+####################################################
+#Query 18
+####################################################
+#Query 19
+####################################################
+#Query 20
+####################################################
+#Query 21
+####################################################
+#Query 22
+####################################################
+#Query 23
+####################################################
+#Query 24
+#####################################################
+#Query 25
+#####################################################
+#Query 26
+####################################################
