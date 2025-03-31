@@ -119,12 +119,3 @@ if st.button("13)Y a-t-il une évolution de la durée moyenne des films par déc
                 st.write(f"Décennie {entry['_id']} : {average_runtime:.2f} minutes")
     else:
         st.error("Aucun film trouvé.")
-
-
-
-
-#def main():
-#    query.query1()
-
-#if __name__ == "__main__":
-#    main()
