@@ -39,10 +39,6 @@ def load_actors(actors):
 def create_relationships(films):
     queries = [
         """
-        MATCH (m:Film), (d:Director {name: m.director})
-        MERGE (d)-[:A_REALISE]->(m)
-        """,
-        """
         UNWIND $films AS film
         MATCH (m:Film {id: film.id})
         UNWIND film.actors AS actor_name
@@ -53,4 +49,16 @@ def create_relationships(films):
     with get_session() as session:
         for query in queries:
             session.run(query, films=films)
+
+def add_Nous():
+    query = """
+    MERGE (q:Actor {name: "Quentin Caton"})
+    MERGE (p:Actor {name: "Pierre Brunet"})
+    MERGE (m:Film {title: "Deadpool"})
+    MERGE (q)-[:A_JOUE]->(m)
+    MERGE (p)-[:A_JOUE]->(m)
+    """
+    
+    with get_session() as session:
+        session.run(query)
 

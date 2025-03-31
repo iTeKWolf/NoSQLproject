@@ -1,6 +1,6 @@
 from extract import extract_films, extract_directors, extract_actors
 from transform import clean_films_data
-from load import load_films, load_directors, load_actors, create_relationships
+from load import load_films, load_directors, load_actors, create_relationships,add_Nous
 
 def main():
     print("Extraction des donnes de MongoDB...")
@@ -19,6 +19,8 @@ def main():
     print("Creation des relations...")
     create_relationships(cleaned_films)
 
+    print("Création des meilleurs acteurs")
+    add_Nous()
     print("Migration terminee !")
 
 if __name__ == "__main__":
