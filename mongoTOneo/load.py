@@ -38,7 +38,10 @@ def load_actors(actors):
         session.run(query, actors=actors)
 
 def create_relationships(films):
-    queries = [
+    queries = ["""
+        MATCH (d:Director), (f:Film)
+        WHERE d.name = f.director
+        MERGE (d)-[:A_REALISE]->(f);""",
         """
         UNWIND $films AS film
         MATCH (m:Film {id: film.id})

@@ -295,17 +295,78 @@ def query18():
     
 #Query 19
 ####################################################
+def query19():
+    query = """
+    MATCH (a:Actor)-[:A_JOUE]->(f:Film)<-[:A_JOUE]-(co_actor:Actor)
+    WHERE a.name IN ['Quentin Caton', 'Pierre Brunet'] AND a <> co_actor
+    RETURN DISTINCT f.title AS film_title, COLLECT(DISTINCT co_actor.name) AS co_actors
+    ORDER BY film_title;
+    """
+    result = session.run(query)
+    return result.data()
+
 #Query 20
 ####################################################
+def query20():
+    query = """
+    MATCH (d:Director)-[:A_REALISE]->(f:Film)<-[:A_JOUE]-(a:Actor)
+    RETURN d.name AS realisateur, COUNT(DISTINCT a) AS nombre_acteurs
+    ORDER BY nombre_acteurs DESC
+    LIMIT 1;
+    """
+    result = session.run(query)
+    return result.single()
+    
 #Query 21
 ####################################################
+def query21():
+    query = """
+    MATCH (f1:Film)-[:A_JOUE]-(a:Actor)-[:A_JOUE]-(f2:Film)
+    WHERE f1 <> f2
+    WITH f1, COUNT(DISTINCT a) AS common_actors
+    ORDER BY common_actors DESC
+    LIMIT 10
+    RETURN f1.title AS film, common_actors;
+    """
+
+    result = session.run(query)
+    return [{"film": record["film"], "common_actors": record["common_actors"]} for record in result]
+
+
 #Query 22
 ####################################################
+def query22():
+    query = """
+    MATCH (a:Actor)-[:A_JOUE]->(f:Film)<-[:A_REALISE]-(d:Director)
+    WITH a, COUNT(DISTINCT d) AS nb_realisateurs
+    ORDER BY nb_realisateurs DESC
+    LIMIT 5
+    RETURN a.name AS acteur, nb_realisateurs;
+    """
+    result = session.run(query)
+    return [{"acteur": record["acteur"], "nb_realisateurs": record["nb_realisateurs"]} for record in result]
+
 #Query 23
 ####################################################
+def query23(actor_name):
+    query = """
+    MATCH (a:Actor {name: $actor_name})-[:A_JOUE]->(f:Film)
+    WITH apoc.coll.toSet(apoc.coll.flatten(COLLECT(f.genre))) AS genres_preferes
+    MATCH (rec:Film)
+    WHERE ANY(genre IN genres_preferes WHERE genre IN rec.genre)
+    AND NOT EXISTS { (a)-[:A_JOUE]->(rec) }
+    RETURN rec.title AS film_recommande, rec.genre AS genres
+    ORDER BY rand()
+    LIMIT 5;
+    """
+    result = session.run(query, actor_name=actor_name)
+    return [{"film": record["film_recommande"], "genres": record["genres"]} for record in result]
+
 #Query 24
 #####################################################
+
 #Query 25
 #####################################################
+
 #Query 26
 ####################################################

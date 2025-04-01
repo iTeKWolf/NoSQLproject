@@ -158,3 +158,52 @@ if st.button("18)Quel est le genre le plus représenté dans la base de données
         st.success(f"Le genre le plus représenté est : {genre} ({count} films)")
     else:
         st.error("Impossible de déterminer le genre le plus représenté.")
+    
+if st.button("19)Quels sont les films dans lesquels les acteurs ayant joué avec vous ont également joué ?"):
+    results = query.query19()
+    if results:
+        for record in results:
+            film_title, co_actors = record["film_title"], record["co_actors"]
+            st.write(f"Film: {film_title}, Acteurs: {', '.join(co_actors)}")
+    else:
+        st.error("Aucun film trouvé pour les acteurs spécifiés.")
+
+if st.button("20)Quel réalisateur Director a travaillé avec le plus grand nombre d'acteurs distincts ?"):
+    realisateur_top = query.query20()
+    if realisateur_top:
+        st.success(f"**{realisateur_top['realisateur']}** est le réalisateur ayant collaboré avec le plus d'acteurs : **{realisateur_top['nombre_acteurs']}** acteurs !")
+    else:
+        st.warning("Aucun réalisateur trouvé.")
+
+if st.button("21)Quels sont les films les plus ”connectés”, c'est-à-dire ceux qui ont le plus d'acteurs en commun avec d'autres films ?"):
+    films = query.query21()
+    if films:
+        for film in films:
+            st.write(f"**{film['film']}** - {film['common_actors']} acteurs en commun")
+    else:
+        st.warning("Aucun film trouvé.")
+
+if st.button("22)Trouver les 5 acteurs ayant joué avec le plus de réalisateurs différents"):
+    actors = query.query22()
+    if actors:
+        for actor in actors:
+            st.write(f"**{actor['acteur']}** - {actor['nb_realisateurs']} réalisateurs")
+    else:
+        st.warning("Aucun acteur trouvé.")
+
+if "show_input" not in st.session_state:
+    st.session_state.show_input = False
+# Bouton pour afficher le champ de texte
+if st.button("23)Recommander un film à un acteur en fonction des genres des films où il a déjà joué."):
+    st.session_state.show_input = True  # Activer l'affichage du champ de texte
+# Affichage conditionnel du champ de texte
+if st.session_state.show_input:
+    actor_name = st.text_input("Nom de l'acteur :", "")
+    if actor_name:  # Vérifier si un nom a été entré
+        recommendations = query.query23(actor_name)
+        if recommendations:
+            st.subheader(f"Films recommandés pour {actor_name}")
+            for rec in recommendations:
+                st.write(f"**{rec['film']}** - Genres : {', '.join(rec['genres'])}")
+        else:
+            st.warning("Aucune recommandation trouvée.")
