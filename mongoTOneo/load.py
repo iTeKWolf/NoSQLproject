@@ -41,13 +41,24 @@ def create_relationships(films):
     queries = ["""
         MATCH (d:Director), (f:Film)
         WHERE d.name = f.director
-        MERGE (d)-[:A_REALISE]->(f);""",
+        MERGE (d)-[:A_REALISE]->(f);
+        """,
         """
         UNWIND $films AS film
         MATCH (m:Film {id: film.id})
         UNWIND film.actors AS actor_name
         MATCH (a:Actor {name: actor_name})
         MERGE (a)-[:A_JOUE]->(m)
+        """,
+        """
+        MATCH (d1:Director)-[:A_REALISE]->(f1:Film),
+            (d2:Director)-[:A_REALISE]->(f2:Film)
+        WHERE d1 <> d2
+        WITH d1, d2, COLLECT(DISTINCT f1.genre) AS genres1, COLLECT(DISTINCT f2.genre) AS genres2
+        WITH d1, d2, apoc.coll.flatten(apoc.coll.intersection(genres1, genres2)) AS common_genres
+        WHERE SIZE(common_genres) > 1
+        MERGE (d1)-[r:INFLUENCE_PAR]->(d2)
+        ON CREATE SET r.common_genres = common_genres;
         """
     ]
     with get_session() as session:

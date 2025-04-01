@@ -109,8 +109,10 @@ def query7():
 ####################################################
 def query8():
     result = collection.aggregate([
-        {"$match": {"Revenue (Millions)": {"$exists": True, "$ne": None, "$ne": ""}}},
+        {"$set": {"genre": {"$split": ["$genre", ","]}}},
         {"$unwind": "$genre"},
+        {"$set": {"genre": {"$trim": {"input": "$genre"}}}},
+        {"$match": {"Revenue (Millions)": {"$exists": True, "$ne": None, "$ne": ""}}},
         {"$group": { "_id": "$genre", "average_revenue": {"$avg": "$Revenue (Millions)"}}},
         {"$sort": {"average_revenue": -1}},
         {"$limit": 1}
@@ -122,11 +124,12 @@ def query8():
 ####################################################
 def query9():
     pipeline = [
-        {"$addFields": {"decade": {"$subtract": ["$year", {"$mod": ["$year", 10]}]}}}, 
-        {"$sort": {"decade": 1, "rating": -1}},
+        {"$match": {"Metascore": {"$exists": True, "$ne": None, "$ne": ""}}},
+        {"$addFields": {"decade": {"$subtract": ["$year", {"$mod": ["$year", 10]}]}}},  
+        {"$sort": {"decade": 1, "Metascore": -1}},
         {"$group": {
             "_id": "$decade",
-            "top_movies": {"$push": {"title": "$title", "rating": "$rating"}}
+            "top_movies": {"$push": {"title": "$title", "Metascore": "$Metascore"}}
         }},
         {"$project": {
             "_id": 1,
@@ -136,14 +139,12 @@ def query9():
     ]
 
     result = list(collection.aggregate(pipeline))
-    # Fonction pour essayer de convertir le rating en nombre
-    # Convertir les résultats pour Streamlit
     formatted_result = []
     for entry in result:
         decade = entry["_id"]
         for movie in entry["top_movies"]:
             title = movie.get("title", "Inconnu")
-            rating = movie.get("rating", "N/A")
+            rating = movie.get("Metascore")
             formatted_result.append({"Décennie": decade, "Titre": title, "Note": rating})
 
     return formatted_result  # Retourner une liste de dictionnaires
@@ -152,8 +153,10 @@ def query9():
 ####################################################
 def query10():
     result = collection.aggregate([
-        {"$match": {"Runtime (Minutes)": {"$exists": True, "$ne": None, "$ne": ""}}},  # Filtrer les films avec durée valide
-        {"$unwind": "$genre"},  # Séparer les genres (si c'est une liste)
+        {"$set": {"genre": {"$split": ["$genre", ","]}}},
+        {"$unwind": "$genre"},
+        {"$set": {"genre": {"$trim": {"input": "$genre"}}}},
+        {"$match": {"Runtime (Minutes)": {"$exists": True, "$ne": None, "$ne": ""}}},
         {"$sort": {"Runtime (Minutes)": -1}},  # Trier par durée décroissante
         {"$group": {
             "_id": "$genre",  
@@ -189,31 +192,29 @@ def query11():
 ####################################################
 def query12():
     result = collection.find(
-        {"Runtime (Minutes)": {"$exists": True, "$ne": None, "$ne": ""},"Revenue (Millions)": {"$exists": True, "$ne": None, "$ne": ""}},
+        {"Runtime (Minutes)": {"$exists": True, "$ne": None, "$ne": ""},
+         "Revenue (Millions)": {"$exists": True, "$ne": None, "$ne": ""}},
         {"Runtime (Minutes)": 1, "Revenue (Millions)": 1, "_id": 0}
     )
+    
     films = list(result)
-
     df = pd.DataFrame(films)
-    # Convertir les valeurs en numériques
+
+    # Convertir en nombres
     df["Runtime (Minutes)"] = pd.to_numeric(df["Runtime (Minutes)"], errors="coerce")
     df["Revenue (Millions)"] = pd.to_numeric(df["Revenue (Millions)"], errors="coerce")
+
     # Supprimer les valeurs NaN après conversion
     df.dropna(inplace=True)
-    # Calcul de la corrélation de Pearson
-    pearson_corr, pearson_p = stats.pearsonr(df["Runtime (Minutes)"], df["Revenue (Millions)"])
-    # Calcul de la corrélation de Spearman
-    spearman_corr, spearman_p = stats.spearmanr(df["Runtime (Minutes)"], df["Revenue (Millions)"])
-    
+
     # Création du graphique
-    fig, ax = plt.subplots(figsize=(10,6))
-    sns.regplot(x=df["Runtime (Minutes)"], y=df["Revenue (Millions)"], 
-                scatter_kws={"alpha":0.5}, line_kws={"color":"red"}, ax=ax)
-    ax.set_title("Correlation entre la durée des films et leur revenu")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.lineplot(x=df["Runtime (Minutes)"], y=df["Revenue (Millions)"], alpha=0.6)
+    ax.set_title("Durée des films vs Revenus")
     ax.set_xlabel("Durée du film (minutes)")
     ax.set_ylabel("Revenu (Millions)")
-
-    return df, pearson_corr, pearson_p, spearman_corr, spearman_p, fig
+    
+    return fig
 
 #Query 13
 ####################################################
@@ -228,7 +229,21 @@ def query13():
     ]
 
     result = list(collection.aggregate(pipeline))
-    return result
+    decades = [item['_id'] for item in result]  # Décennies
+    average_runtimes = [item['average_runtime'] for item in result]
+
+    df = pd.DataFrame({
+        'Decade': decades,
+        'Average Runtime (Minutes)': average_runtimes
+    })
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(x='Decade', y='Average Runtime (Minutes)', data=df, color='skyblue', ax=ax)
+    ax.set_xlabel('Décennie')
+    ax.set_ylabel('Durée moyenne')
+    ax.set_title('Durée moyenne des films par décennie')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    return fig
 
 #Query 14
 ####################################################
@@ -364,6 +379,7 @@ def query23(actor_name):
 
 #Query 24
 #####################################################
+#Créé dans load.py
 
 #Query 25
 #####################################################

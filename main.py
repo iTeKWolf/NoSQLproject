@@ -91,34 +91,16 @@ if st.button("11)Créer une vue MongoDB affichant uniquement les films ayant une
 
 
 if st.button("12)Calculer la corrélation entre la durée des films (Runtime) et leur revenu (Revenue). (réaliser une analyse statistique.)"):
-    df, pearson_corr, pearson_p, spearman_corr, spearman_p, fig = query.query12()
-
-    # Affichage des résultats
-    st.subheader("Résumé des données")
-    st.dataframe(df.head(10))  # Affiche les 10 premières lignes
-
-    st.subheader("Corrélation")
-    st.write(f"**Pearson**: {pearson_corr:.4f} (p-value: {pearson_p:.4f})")
-    st.write(f"**Spearman**: {spearman_corr:.4f} (p-value: {spearman_p:.4f})")
-
-    # Affichage du graphique
+    fig = query.query12()
     st.subheader("Graphique de la corrélation")
     st.pyplot(fig)
 
 
 if st.button("13)Y a-t-il une évolution de la durée moyenne des films par décennie ?"):
-    result = query.query13()
-    if result:
-        st.subheader("13) Évolution de la durée moyenne des films par décennie :")
-        for entry in result:
-            # Vérification si 'average_runtime' est None
-            average_runtime = entry.get('average_runtime')
-            if average_runtime is None:
-                st.write(f"Décennie {entry['_id']} : Non disponible")
-            else:
-                st.write(f"Décennie {entry['_id']} : {average_runtime:.2f} minutes")
-    else:
-        st.error("Aucun film trouvé.")
+
+    fig=query.query13()
+    st.pyplot(fig)
+
 
 st.title("Partie Neo4j")
 
