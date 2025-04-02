@@ -175,13 +175,11 @@ if st.button("22)Trouver les 5 acteurs ayant joué avec le plus de réalisateurs
 
 if "show_input" not in st.session_state:
     st.session_state.show_input = False
-# Bouton pour afficher le champ de texte
 if st.button("23)Recommander un film à un acteur en fonction des genres des films où il a déjà joué."):
-    st.session_state.show_input = True  # Activer l'affichage du champ de texte
-# Affichage conditionnel du champ de texte
+    st.session_state.show_input = True  
 if st.session_state.show_input:
     actor_name = st.text_input("Nom de l'acteur :", "")
-    if actor_name:  # Vérifier si un nom a été entré
+    if actor_name: 
         recommendations = query.query23(actor_name)
         if recommendations:
             st.subheader(f"Films recommandés pour {actor_name}")
@@ -189,3 +187,53 @@ if st.session_state.show_input:
                 st.write(f"**{rec['film']}** - Genres : {', '.join(rec['genres'])}")
         else:
             st.warning("Aucune recommandation trouvée.")
+
+actor1 = st.text_input("Nom du premier acteur")
+actor2 = st.text_input("Nom du deuxième acteur")
+if st.button("25)Quel est le 'chemin' le plus court entre deux acteurs donnés"):
+    if actor1 and actor2:
+        path = query.query25(actor1, actor2)
+        if not path:
+            st.error("Aucun chemin trouvé entre ces deux acteurs.")
+            st.stop
+        nodes = []
+        for node in path.nodes:
+            if "name" in node and node["name"]:  # Si c'est un acteur/réalisateur
+                nodes.append(node["name"])
+            elif "title" in node and node["title"]:  # Si c'est un film
+                nodes.append(f"{node['title']}")
+            else:
+                nodes.append("Inconnu")
+    
+        st.success("Chemin trouvé !")
+        st.write(" → ".join(nodes))
+
+    else:
+        st.error("Veuillez entrer les noms des deux acteurs.")
+
+if st.button("26)Analyser les communautés d'acteurs : Quels sont les groupes d'acteurs qui ont tendance à travailler ensemble ?"):
+    results = query.query26()
+    for actor, community in results:
+        st.write(f"{actor} appartient à la communauté {community}")
+
+if st.button("27)Quels sont les films qui ont des genres en commun mais qui ont des réalisateurs différents ?"):
+    similar_movies = query.query27()
+
+    if not similar_movies:
+        st.write("Aucun film trouvé avec ces critères.")
+    else:
+        for entry in similar_movies:
+            st.subheader(f"Genre : {entry['genre']}")
+            for film, director in entry["films"]:
+                st.write(f"**{film}** - Réalisé par : {director}")
+            st.markdown("---")
+
+actor_name = st.text_input("Entrez le nom d'un acteur :")
+if st.button("28)Recommander des films aux utilisateurs en fonction des préférences d'un acteur donné."):
+    recommendations = query.query28(actor_name)
+    if recommendations:
+        st.subheader("Films recommandés :")
+        for rec in recommendations:
+            st.write(f"{rec['film']} - Genres : {', '.join(rec['genres'])}")
+    else:
+        st.warning("Aucune recommandation trouvée.")

@@ -4,8 +4,11 @@ import streamlit as st
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
-from collections import Counter
+from collections import Counter,defaultdict
 import scipy.stats as stats
+import networkx as nx
+from networkx.algorithms.community import greedy_modularity_communities
+from neo4j import GraphDatabase
 
 import matplotlib
 matplotlib.use("Agg")
@@ -365,10 +368,11 @@ def query22():
 ####################################################
 def query23(actor_name):
     query = """
-    MATCH (a:Actor {name: $actor_name})-[:A_JOUE]->(f:Film)
-    WITH apoc.coll.toSet(apoc.coll.flatten(COLLECT(f.genre))) AS genres_preferes
+    MATCH (a:Actor {name: "Johnny Depp"})-[:A_JOUE]->(f:Film)
+    WITH a, apoc.coll.toSet(apoc.coll.flatten(COLLECT(f.genre))) AS genres_preferes
     MATCH (rec:Film)
-    WHERE ANY(genre IN genres_preferes WHERE genre IN rec.genre)
+    WHERE size(genres_preferes) > 0  // Vérifie que l'acteur a bien des genres préférés
+    AND ANY(genre IN genres_preferes WHERE genre IN rec.genre)
     AND NOT EXISTS { (a)-[:A_JOUE]->(rec) }
     RETURN rec.title AS film_recommande, rec.genre AS genres
     ORDER BY rand()
@@ -383,6 +387,116 @@ def query23(actor_name):
 
 #Query 25
 #####################################################
+def query25(actor1, actor2):
+    query = """
+    MATCH p = shortestPath(
+        (a1:Actor {name: $actor1})-[:A_JOUE|A_REALISE*]-(a2:Actor {name: $actor2}))
+    RETURN p
+    """
+    result = session.run(query, actor1=actor1, actor2=actor2)
+    path = result.single()
+    return path["p"] if path else None
 
 #Query 26
+####################################################
+def query26():
+    query = """
+    MATCH (a1:Actor)-[:A_JOUE]->(:Film)<-[:A_JOUE]-(a2:Actor)
+    WHERE id(a1) < id(a2)
+    RETURN a1.name AS actor1, a2.name AS actor2
+    """
+    result = session.run(query)
+    edges = [(record["actor1"], record["actor2"]) for record in result]
+
+    G = nx.Graph()
+    G.add_edges_from(edges)
+
+    communities = list(greedy_modularity_communities(G))
+    community_data = []
+    for i, community in enumerate(communities):
+        for actor in community:
+            community_data.append((actor, i))  # Associer l'acteur à une communauté
+
+    return community_data
+
+#Query 27
+####################################################
+def query27():
+    films = list(collection.find({}, {"_id": 0, "title": 1, "genre": 1, "Director": 1}))
+    
+    film_directors = {}
+
+    for film in films:
+        title = film.get("title", "Titre inconnu")
+        genres = film.get("genre", "")
+        if isinstance(genres, str):  
+            genres = [g.strip() for g in genres.split(",")]
+        query = """
+        MATCH (f:Film {title: $title})<-[:A_REALISE]-(d:Director)
+        RETURN d.name AS director
+        """
+        result = session.run(query, title=title)
+        director = result.single()
+        if director:
+            film_directors[film["title"]] = director["director"]
+
+    genre_dict = defaultdict(list)
+    for film in films:
+        if film.get("title", "Titre inconnu") in film_directors:
+            genres = film.get("genre", "").split(",")
+            for genre in genres:
+                genre_dict[genre].append((film["title"], film_directors[film["title"]]))
+
+    recommendations = []
+    for genre, films in genre_dict.items():
+        unique_films = list(set(films))
+        unique_directors = {director for _, director in films}
+        if len(unique_directors) > 1:
+            recommendations.append({
+                "genre": genre,
+                "films": unique_films
+            })
+
+    return recommendations
+
+#Query 28
+####################################################
+def query28(actor_name):
+    actor_movies = collection.find({"Actors": {"$regex": f".*{actor_name}.*"}}, {"_id": 0, "genre": 1})
+    genre_counts = defaultdict(int)
+    actor_movies_list = list(actor_movies)
+
+    for movie in actor_movies_list:
+        if "genre" in movie and movie["genre"]:
+            genres = [genre.strip() for genre in movie["genre"].split(",")]
+            for genre in genres:
+                genre_counts[genre] += 1
+    
+
+    preferred_genres = sorted(genre_counts.keys(), key=lambda g: genre_counts[g], reverse=True)
+
+    if not preferred_genres:
+        return []
+    query = """
+    MATCH (f:Film)
+    WITH f, 
+        [genre IN f.genre WHERE genre IN $preferred_genres] AS matching_genres
+    WHERE size(matching_genres) > 0
+    AND NOT EXISTS {
+        MATCH (:Actor {name: $actor_name})-[:A_JOUE]->(f)
+    }
+    RETURN f.title AS film, f.genre AS genres, size(matching_genres) AS genre_match_count
+    ORDER BY genre_match_count DESC, rand()
+    LIMIT 5;
+    """
+
+    result = session.run(query, actor_name=actor_name, preferred_genres=preferred_genres)
+    return [{"film": record["film"], "genres": record["genres"]} for record in result]
+
+
+#Query 29
+####################################################
+#Créé dans load.py
+
+#Query 30
 ####################################################

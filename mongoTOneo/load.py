@@ -59,6 +59,16 @@ def create_relationships(films):
         WHERE SIZE(common_genres) > 1
         MERGE (d1)-[r:INFLUENCE_PAR]->(d2)
         ON CREATE SET r.common_genres = common_genres;
+        """,
+        """
+        MATCH (d1:Director)-[:A_REALISE]->(f1:Film)
+        MATCH (d2:Director)-[:A_REALISE]->(f2:Film)
+        WHERE d1 <> d2
+            AND f1.year = f2.year
+            AND ANY(genre IN f1.genre WHERE genre IN f2.genre)
+            AND d1.name < d2.name  // Ensures a single relation between d1 and d2, no duplicates
+        CREATE (d1)-[:CONCURRENCE]->(d2)
+        RETURN d1.name AS Director1, d2.name AS Director2, f1.year AS Year, f1.genre AS Common_Genre
         """
     ]
     with get_session() as session:

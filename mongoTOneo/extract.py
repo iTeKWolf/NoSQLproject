@@ -1,4 +1,6 @@
 from database import get_collection
+import re
+
 
 collection = get_collection()
 
@@ -12,5 +14,6 @@ def extract_directors():
 
 def extract_actors():
     actors = collection.distinct("Actors")
-    flat_list = {actor for sublist in actors if sublist for actor in sublist.split(", ")}
+    #flat_list = {actor for sublist in actors if sublist for actor in sublist.split(", ")}
+    flat_list = {actor.strip() for sublist in actors if sublist for actor in re.split(r',\s*', sublist)}
     return [{"name": actor} for actor in flat_list]
